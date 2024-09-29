@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Ywy20010917.  # 设置 MySQL root 用户的密码
+      MYSQL_DATABASE: bitcoin_explorer      # 可以在启动时创建的数据库
+      MYSQL_USER: zerzerr917                # 创建用户
+      MYSQL_PASSWORD: Ywy20010917.          # 创建用户的密码
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend  # 指定构建上下文
+      dockerfile: Dockerfile  # 明确指定 Dockerfile 名称
+    depends_on:
+      - mysql
+    ports:
+      - "3030:3030" 
+      
+
+  frontend:
+    build:
+      context: ./frontend  # 指定构建上下文
+      dockerfile: Dockerfile  # 明确指定 Dockerfile 名称
+    ports:
+      - "80:80"  # NGINX 在80端口提供服务
+    depends_on:
+      - backend
+volumes:
+  mysql-data: {}
