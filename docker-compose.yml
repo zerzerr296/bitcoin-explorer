@@ -13,13 +13,18 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
 
   backend:
     build:
       context: ./backend  # 指定构建上下文
       dockerfile: Dockerfile  # 明确指定 Dockerfile 名称
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     ports:
       - "8080:8080"  # 将主机的 8080 端口映射到容器的 8080 端口
     environment:
