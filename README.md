@@ -23,7 +23,7 @@ Bitcoin Explorer is a real-time data visualization tool that displays on-chain a
     git clone git@github.com:zerzerr296/bitcoin-explorer.git
     cd bitcoin-explorer
     ```
-
+aad
 2. **Configure Docker and MySQL**:
     - Set up your `.env` file for MySQL configuration.
     - Run `docker-compose up` to start the services.
