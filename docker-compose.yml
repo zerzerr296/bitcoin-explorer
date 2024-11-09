@@ -21,8 +21,9 @@ services:
     depends_on:
       - mysql
     ports:
-      - "3030:3030" 
-      
+      - "8080:8080"  # 将主机的 8080 端口映射到容器的 8080 端口
+    environment:
+      DATABASE_URL: mysql://zerzerr917:Ywy20010917.@mysql/bitcoin_explorer  # 配置数据库连接字符串
 
   frontend:
     build:
@@ -32,5 +33,6 @@ services:
       - "80:80"  # NGINX 在80端口提供服务
     depends_on:
       - backend
+
 volumes:
   mysql-data: {}

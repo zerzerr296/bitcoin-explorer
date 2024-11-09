@@ -22,11 +22,12 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/bitcoin-explorer-backend:${{ github.sha }} ./backend
         docker push ${{ secrets.DOCKER_USERNAME }}/bitcoin-explorer-backend:${{ github.sha }}
-
+    
     - name: Build and push Frontend Docker image
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/bitcoin-explorer-frontend:${{ github.sha }} ./frontend
         docker push ${{ secrets.DOCKER_USERNAME }}/bitcoin-explorer-frontend:${{ github.sha }}
+    
 
     - name: Cleanup Docker images
       run: docker system prune -f --volumes
