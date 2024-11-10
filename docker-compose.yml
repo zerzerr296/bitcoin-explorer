@@ -17,6 +17,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
+    networks:
+      - bitcoin-explorer_default  # 将 mysql 服务连接到 bitcoin-explorer_default 网络
 
   backend:
     build:
@@ -30,6 +32,8 @@ services:
       - "3030:3030"
     environment:
       DATABASE_URL: mysql://zerzerr917:Ywy20010917.@mysql/bitcoin_explorer  # 配置数据库连接字符串
+    networks:
+      - bitcoin-explorer_default  # 将 backend 服务连接到 bitcoin-explorer_default 网络
 
   frontend:
     build:
@@ -39,6 +43,12 @@ services:
       - "8082:80"  # NGINX 在80端口提供服务
     depends_on:
       - backend
+    networks:
+      - bitcoin-explorer_default  # 将 frontend 服务连接到 bitcoin-explorer_default 网络
 
 volumes:
   mysql-data: {}
+
+networks:
+  bitcoin-explorer_default:
+    external: true  # 使用外部网络，这样多个服务可以共享该网络
