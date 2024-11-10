@@ -54,6 +54,7 @@ async fn user_connected(ws: warp::ws::WebSocket, mut rx: tokio::sync::broadcast:
 
     while let Ok(msg) = rx.recv().await {
         if ws_tx.send(warp::ws::Message::text(msg)).await.is_err() {
+            println!("Failed to send message, closing connection.");
             break;
         }
     }
@@ -150,6 +151,7 @@ async fn main() {
                         height, transactions, price
                     );
 
+                    println!("Attempting to broadcast message: {}", message);
                     // 广播数据给所有连接的客户端
                     if let Err(e) = {
                         let tx = tx_clone.lock().await;
@@ -160,7 +162,14 @@ async fn main() {
                         println!("Broadcasted message: {}", message);
                     }
 
-                    println!("Inserted: Height: {}, Transactions: {}, Price: {}", height, transactions, price);
+                    conn.exec_drop(
+                        "INSERT INTO blocks (block_height, transactions, price) VALUES (:height, :transactions, :price)",
+                        params! {
+                            "height" => height,
+                            "transactions" => transactions,
+                            "price" => price,
+                        }
+                    ).unwrap();
                 }
                 Err(e) => {
                     println!("Failed to fetch blockchain data: {}", e);
