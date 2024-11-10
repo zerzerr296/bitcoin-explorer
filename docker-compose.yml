@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:5.7
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: Ywy20010917.  # 设置 MySQL root 用户的密码
-      MYSQL_DATABASE: bitcoin_explorer      # 可以在启动时创建的数据库
-      MYSQL_USER: zerzerr917                # 创建用户
-      MYSQL_PASSWORD: Ywy20010917.          # 创建用户的密码
+      MYSQL_DATABASE: bitcoin_explorer  # 创建的数据库
+      MYSQL_USER: zerzerr917           # 创建用户
+      MYSQL_PASSWORD: Ywy20010917.     # 创建用户的密码
     ports:
       - "3306:3306"
     volumes:
@@ -18,7 +16,7 @@ services:
       interval: 10s
       retries: 5
     networks:
-      - bitcoin-explorer_default  # 将 mysql 服务连接到 bitcoin-explorer_default 网络
+      - bitcoin-explorer_default
 
   backend:
     build:
@@ -28,12 +26,12 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "8080:8080"  # 将主机的 8080 端口映射到容器的 8080 端口
+      - "8080:8080"
       - "3030:3030"
     environment:
       DATABASE_URL: mysql://zerzerr917:Ywy20010917.@mysql/bitcoin_explorer  # 配置数据库连接字符串
     networks:
-      - bitcoin-explorer_default  # 将 backend 服务连接到 bitcoin-explorer_default 网络
+      - bitcoin-explorer_default
 
   frontend:
     build:
@@ -44,7 +42,7 @@ services:
     depends_on:
       - backend
     networks:
-      - bitcoin-explorer_default  # 将 frontend 服务连接到 bitcoin-explorer_default 网络
+      - bitcoin-explorer_default
 
 volumes:
   mysql-data: {}
