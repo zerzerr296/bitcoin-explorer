@@ -35,7 +35,7 @@ services:
       context: ./frontend  # 指定构建上下文
       dockerfile: Dockerfile  # 明确指定 Dockerfile 名称
     ports:
-      - "80:80"  # NGINX 在80端口提供服务
+      - "8081:80"  # NGINX 在80端口提供服务
     depends_on:
       - backend
 
