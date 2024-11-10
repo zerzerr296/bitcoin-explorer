@@ -1,6 +1,5 @@
 # Stage 1: Build backend
-# syntax=docker/dockerfile:1.4
-FROM rust:latest AS backend-builder  # 使用正确的格式
+FROM rust:latest AS backend-builder
 WORKDIR /app
 COPY . .
 RUN cargo build --release
