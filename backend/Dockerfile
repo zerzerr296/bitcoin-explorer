@@ -1,6 +1,6 @@
 # Stage 1: Build backend
 # syntax=docker/dockerfile:1.4
-FROM rust:latest AS backend-builder-stage  # 修改了阶段的名称
+FROM rust:latest AS backend-builder-stage  # 确保FROM语法正确
 WORKDIR /app
 COPY . .
 RUN cargo build --release
