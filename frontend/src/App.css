@@ -7,12 +7,6 @@
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -29,7 +23,7 @@
 }
 
 .chart-container {
-  width: 90%; /* 设置宽度为页面的90% */
+  width: 80%; /* 设置宽度为页面的80% */
   max-width: 1200px; /* 最大宽度为1200px */
   margin: 20px auto; /* 上下20px，左右自动居中 */
   padding: 20px;
@@ -45,4 +39,12 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 控制X轴的时间标签倾斜显示 */
+.recharts-cartesian-axis-tick-value {
+  transform: rotate(-45deg);  /* 旋转45度 */
+  transform-origin: bottom left;  /* 设置旋转原点 */
+  text-align: right;  /* 文字右对齐 */
+  white-space: nowrap;  /* 防止文字换行 */
 }

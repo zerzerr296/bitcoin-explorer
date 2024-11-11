@@ -16,10 +16,10 @@ struct BlockData {
     height: i32,
     transactions: i64,
     price: f64,
-    timestamp: String,  // 将时间戳字段改为 `timestamp`
+    time: String, // 添加时间字段
 }
 
-async fn fetch_blockchain_data() -> Result<(i32, i64, String)> {
+async fn fetch_blockchain_data() -> Result<(i32, i64, String, String)> {
     let client = reqwest::Client::builder()
         .danger_accept_invalid_certs(true)
         .build()?;
@@ -32,8 +32,9 @@ async fn fetch_blockchain_data() -> Result<(i32, i64, String)> {
     let height = json["height"].as_i64().ok_or(anyhow::anyhow!("Height field missing or invalid"))? as i32;
     let transactions = json["unconfirmed_count"].as_i64().ok_or(anyhow::anyhow!("Unconfirmed transactions field missing or invalid"))?;
     let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?.to_string();
+    let time = json["time"].as_str().ok_or(anyhow::anyhow!("Time field missing or invalid"))?.to_string(); // 获取时间字段
     
-    Ok((height, transactions, hash))
+    Ok((height, transactions, hash, time)) // 返回时间字段
 }
 
 async fn fetch_bitcoin_price() -> Result<f64> {
@@ -72,7 +73,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
             height,
             transactions,
             price,
-            timestamp,
+            time: timestamp, // 使用数据库中存储的时间
         })
         .collect();
 
@@ -146,10 +147,9 @@ async fn main() {
     tokio::spawn(async move {
         loop {
             match fetch_blockchain_data().await {
-                Ok((height, transactions, hash)) => {
+                Ok((height, transactions, hash, time)) => { // 获取到时间字段
                     // 确保所有数据已获取后，再获取价格
                     if let Ok(price) = fetch_bitcoin_price().await {
-                        let timestamp = chrono::Utc::now().to_rfc3339(); // 使用当前时间作为时间戳
                         conn.exec_drop(
                             "INSERT INTO blocks (block_height, transactions, price, hash, timestamp) VALUES (:height, :transactions, :price, :hash, :timestamp)",
                             params! {
@@ -157,13 +157,13 @@ async fn main() {
                                 "transactions" => transactions,
                                 "price" => price,
                                 "hash" => hash,
-                                "timestamp" => &timestamp,  // 使用借用（&timestamp）而非移动
+                                "timestamp" => &time, // 保存读取到的时间
                             }
                         ).unwrap();
 
                         let message = format!(
                             r#"{{"height": {}, "transactions": {}, "price": {}, "timestamp": "{}"}}"#,
-                            height, transactions, price, timestamp
+                            height, transactions, price, time
                         );
 
                         // 广播数据给所有连接的客户端
@@ -176,7 +176,7 @@ async fn main() {
                             println!("Broadcasted message: {}", message);
                         }
 
-                        println!("Inserted: Height: {}, Transactions: {}, Price: {}, Timestamp: {}", height, transactions, price, timestamp);
+                        println!("Inserted: Height: {}, Transactions: {}, Price: {}, Timestamp: {}", height, transactions, price, time);
                     } else {
                         println!("Failed to fetch price, skipping insertion");
                     }
@@ -186,7 +186,7 @@ async fn main() {
                 }
             }
 
-            sleep(Duration::from_secs(300)).await; // 每 5 分钟获取一次数据
+            sleep(Duration::from_secs(300)).await; // 每 300 秒获取一次数据
         }
     });
 
