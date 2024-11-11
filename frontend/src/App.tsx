@@ -13,6 +13,7 @@ function App() {
     const [data, setData] = useState<DataPoint[]>([]);
     const apiUrl = 'http://104.154.105.117:3030'; 
     const wsUrl = 'ws://104.154.105.117:3030/ws';
+
     // 获取初始数据
     useEffect(() => {
         async function fetchInitialData() {
@@ -20,7 +21,7 @@ function App() {
                 const response = await axios.get(`${apiUrl}/latest_blocks`);
                 const formattedData = response.data.map((item: any) => ({
                     ...item,
-                    time: new Date().toLocaleTimeString(),
+                    time: new Date(item.time).toLocaleTimeString(), // 使用返回的时间字段，转换为本地时间
                 }));
                 setData(formattedData);
             } catch (error) {
@@ -41,7 +42,7 @@ function App() {
                 const parsedData = JSON.parse(event.data);
                 const newDataPoint: DataPoint = {
                     ...parsedData,
-                    time: new Date().toLocaleTimeString(),
+                    time: new Date().toLocaleTimeString(), // 使用当前时间更新
                 };
 
                 setData((prevData) => {

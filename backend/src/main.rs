@@ -16,7 +16,7 @@ struct BlockData {
     height: i32,
     transactions: i64,
     price: f64,
-    time: String,
+    time: String,  // 这是区块的时间戳
 }
 
 async fn fetch_blockchain_data() -> Result<(i32, i64, String)> {
@@ -62,17 +62,17 @@ async fn user_connected(ws: warp::ws::WebSocket, mut rx: tokio::sync::broadcast:
 }
 
 async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
-    let result: Vec<(i32, i64, f64)> = conn
-        .query("SELECT block_height, transactions, price FROM blocks ORDER BY id DESC LIMIT 10")
+    let result: Vec<(i32, i64, f64, String)> = conn
+        .query("SELECT block_height, transactions, price, timestamp FROM blocks ORDER BY id DESC LIMIT 10")
         .unwrap();
 
     let data: Vec<BlockData> = result
         .into_iter()
-        .map(|(height, transactions, price)| BlockData {
+        .map(|(height, transactions, price, timestamp)| BlockData {
             height,
             transactions,
             price,
-            time: chrono::Utc::now().to_rfc3339(),
+            time: timestamp,  // 使用数据库中存储的时间戳
         })
         .collect();
 
@@ -149,19 +149,22 @@ async fn main() {
                 Ok((height, transactions, hash)) => {
                     // 确保所有数据已获取后，再获取价格
                     if let Ok(price) = fetch_bitcoin_price().await {
+                        let timestamp = chrono::Utc::now().to_rfc3339(); // 使用当前时间作为时间戳
+
                         conn.exec_drop(
-                            "INSERT INTO blocks (block_height, transactions, price, hash) VALUES (:height, :transactions, :price, :hash)",
+                            "INSERT INTO blocks (block_height, transactions, price, hash, timestamp) VALUES (:height, :transactions, :price, :hash, :timestamp)",
                             params! {
                                 "height" => height,
                                 "transactions" => transactions,
                                 "price" => price,
                                 "hash" => hash,
+                                "timestamp" => timestamp,  // 插入时间戳
                             }
                         ).unwrap();
 
                         let message = format!(
-                            r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
-                            height, transactions, price
+                            r#"{{"height": {}, "transactions": {}, "price": {}, "time": "{}"}}"#,
+                            height, transactions, price, timestamp
                         );
 
                         // 广播数据给所有连接的客户端
@@ -174,7 +177,7 @@ async fn main() {
                             println!("Broadcasted message: {}", message);
                         }
 
-                        println!("Inserted: Height: {}, Transactions: {}, Price: {}", height, transactions, price);
+                        println!("Inserted: Height: {}, Transactions: {}, Price: {}, Time: {}", height, transactions, price, timestamp);
                     } else {
                         println!("Failed to fetch price, skipping insertion");
                     }
@@ -184,7 +187,7 @@ async fn main() {
                 }
             }
 
-            sleep(Duration::from_secs(60)).await; // 每 60 秒获取一次数据
+            sleep(Duration::from_secs(300)).await; // 每 5 分钟获取一次数据
         }
     });
 
