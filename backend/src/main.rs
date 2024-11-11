@@ -186,7 +186,7 @@ async fn main() {
                 }
             }
 
-            sleep(Duration::from_secs(300)).await; // 每 300 秒获取一次数据
+            sleep(Duration::from_secs(60)).await; // 每 300 秒获取一次数据
         }
     });
 
