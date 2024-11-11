@@ -53,7 +53,8 @@ async fn fetch_bitcoin_price() -> Result<f64> {
 async fn main() {
     let tx = Arc::new(Mutex::new(broadcast::channel(100).0));
 
-    let websocket_route = warp::path("ws")
+    let websocket_route = warp::path("api")
+        .and(warp::path("ws"))
         .and(warp::ws())
         .map({
             let tx = Arc::clone(&tx);
@@ -83,7 +84,8 @@ async fn main() {
         };
     };
 
-    let latest_blocks_route = warp::path("latest_blocks")
+    let latest_blocks_route = warp::path("api")
+        .and(warp::path("latest_blocks"))
         .and(warp::get())
         .and_then({
             let pool = pool.clone();
@@ -124,7 +126,6 @@ async fn main() {
                         );
 
                         println!("Attempting to broadcast message: {}", message);
-                        // 广播数据给所有连接的客户端
                         if let Err(e) = {
                             let tx = tx_clone.lock().await;
                             tx.send(message.clone())
@@ -146,7 +147,7 @@ async fn main() {
         }
     });
 
-    println!("WebSocket server started at ws://0.0.0.0:3030/ws");
+    println!("WebSocket server started at ws://0.0.0.0:3030/api/ws");
 
     warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
 }
