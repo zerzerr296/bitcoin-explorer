@@ -9,7 +9,7 @@
 .chart-container {
   display: flex;
   justify-content: center;
-  width: 80%;
+  width: 90%;  /* 这里调整为90% */
   max-width: 1200px;
   margin: 20px 0;
   padding: 20px 0;
@@ -18,7 +18,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 调整X轴标签的字体大小和间距 */
+/* X轴的时间标签，字体更小，减少重叠 */
 .recharts-cartesian-axis-tick-value {
   font-size: 9px;
   transform: rotate(-45deg);
@@ -31,7 +31,7 @@
   padding-bottom: 10px;
 }
 
-/* 调整坐标轴之间的间距 */
+/* 右边距的调整 */
 .recharts-cartesian-axis {
   margin-top: 10px;
 }
