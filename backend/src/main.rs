@@ -83,6 +83,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
 async fn main() {
     let tx = Arc::new(Mutex::new(broadcast::channel(100).0)); // 使用 Arc<Mutex<>> 包装 tx
 
+    // WebSocket 路由
     let websocket_route = warp::path("ws")
         .and(warp::ws())
         .map({
@@ -102,6 +103,7 @@ async fn main() {
             }
         });
 
+    // MySQL 连接池
     let url = "mysql://zerzerr917:Ywy20010917.@mysql:3306/bitcoin_explorer";
     let pool = loop {
         match Pool::new(url) {
@@ -113,6 +115,7 @@ async fn main() {
         };
     };
 
+    // 获取最新的区块数据
     let latest_blocks_route = warp::path("latest_blocks")
         .and(warp::get())
         .and_then({
@@ -126,8 +129,16 @@ async fn main() {
             }
         });
 
+    // CORS 配置
+    let cors = warp::cors()
+        .allow_any_origin()  // 允许任何来源
+        .allow_methods(vec!["GET", "POST"]) // 允许GET和POST请求
+        .allow_headers(vec!["Content-Type", "Authorization"]);
+
+    // 配置CORS到路由中
     let routes = websocket_route
-        .or(latest_blocks_route);
+        .or(latest_blocks_route)
+        .with(cors);  // 使用 CORS 策略
 
     let mut conn = pool.get_conn().unwrap();
     let tx_clone = Arc::clone(&tx); // 克隆 Arc
