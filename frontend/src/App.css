@@ -23,7 +23,9 @@
 }
 
 .chart-container {
-  width: 60%; /* 使宽度为页面的90%，以保持左右有空间 */
+  display: flex;
+  justify-content: center;
+  width: 90%; /* 增加左右留白，设置宽度为页面的90% */
   max-width: 1200px; /* 最大宽度为1200px */
   margin: 20px auto; /* 上下20px，左右自动居中 */
   padding: 20px;
@@ -31,15 +33,16 @@
   border-radius: 10px; /* 圆角边框 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 阴影效果 */
   box-sizing: border-box; /* 确保 padding 不影响宽度计算 */
+  padding-bottom: 50px; /* 防止Y轴被遮挡 */
 }
 
 /* 控制X轴的时间标签倾斜显示 */
 .recharts-cartesian-axis-tick-value {
-  transform: rotate(-45deg);  /* 旋转45度 */
-  transform-origin: bottom left;  /* 设置旋转原点 */
-  text-align: right;  /* 文字右对齐 */
-  white-space: nowrap;  /* 防止文字换行 */
-  font-size: 1px;
+  transform: rotate(-45deg); /* 旋转45度 */
+  transform-origin: bottom left; /* 设置旋转原点 */
+  text-align: right; /* 文字右对齐 */
+  white-space: nowrap; /* 防止文字换行 */
+  font-size: 8px; /* 调整字体大小 */
 }
 
 /* 增加x轴刻度的间距，避免日期重叠 */

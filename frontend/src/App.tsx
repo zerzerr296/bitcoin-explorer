@@ -27,7 +27,7 @@ function App() {
                 console.error('Failed to fetch initial data:', error);
             }
         }
-    
+
         fetchInitialData();
     }, []);    
 
@@ -86,6 +86,7 @@ function App() {
                                 dataKey="time"  // 使用 time 字段
                                 angle={45} // 设置 X 轴刻度的倾斜角度
                                 textAnchor="start" // 设置文本起始位置
+                                tickLine={false} // 禁用X轴的刻度线
                             />
                             <YAxis />
                             <Tooltip />
