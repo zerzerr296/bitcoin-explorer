@@ -16,7 +16,7 @@ struct BlockData {
     height: i32,
     transactions: i64,
     price: f64,
-    time: String,  // 这是区块的时间戳
+    timestamp: String,  // 将时间戳字段改为 `timestamp`
 }
 
 async fn fetch_blockchain_data() -> Result<(i32, i64, String)> {
@@ -72,7 +72,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
             height,
             transactions,
             price,
-            time: timestamp,  // 使用数据库中存储的时间戳
+            timestamp,
         })
         .collect();
 
@@ -150,7 +150,6 @@ async fn main() {
                     // 确保所有数据已获取后，再获取价格
                     if let Ok(price) = fetch_bitcoin_price().await {
                         let timestamp = chrono::Utc::now().to_rfc3339(); // 使用当前时间作为时间戳
-
                         conn.exec_drop(
                             "INSERT INTO blocks (block_height, transactions, price, hash, timestamp) VALUES (:height, :transactions, :price, :hash, :timestamp)",
                             params! {
@@ -158,12 +157,12 @@ async fn main() {
                                 "transactions" => transactions,
                                 "price" => price,
                                 "hash" => hash,
-                                "timestamp" => timestamp,  // 插入时间戳
+                                "timestamp" => &timestamp,  // 使用借用（&timestamp）而非移动
                             }
                         ).unwrap();
 
                         let message = format!(
-                            r#"{{"height": {}, "transactions": {}, "price": {}, "time": "{}"}}"#,
+                            r#"{{"height": {}, "transactions": {}, "price": {}, "timestamp": "{}"}}"#,
                             height, transactions, price, timestamp
                         );
 
@@ -177,7 +176,7 @@ async fn main() {
                             println!("Broadcasted message: {}", message);
                         }
 
-                        println!("Inserted: Height: {}, Transactions: {}, Price: {}, Time: {}", height, transactions, price, timestamp);
+                        println!("Inserted: Height: {}, Transactions: {}, Price: {}, Timestamp: {}", height, transactions, price, timestamp);
                     } else {
                         println!("Failed to fetch price, skipping insertion");
                     }
