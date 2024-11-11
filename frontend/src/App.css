@@ -39,6 +39,7 @@
   transform-origin: bottom left;  /* 设置旋转原点 */
   text-align: right;  /* 文字右对齐 */
   white-space: nowrap;  /* 防止文字换行 */
+  font-size: 1px;
 }
 
 /* 增加x轴刻度的间距，避免日期重叠 */
