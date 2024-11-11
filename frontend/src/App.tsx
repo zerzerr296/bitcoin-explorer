@@ -84,7 +84,7 @@ function App() {
                                 textAnchor="start" 
                                 tickLine={false} 
                                 tickSize={8}
-                                padding={{ left: 20, right: 20 }} 
+                                padding={{ left: 20}} 
                                 tick={{ fontSize: 9 }} 
                             />
                             <YAxis tick={{ fontSize: 12 }} />
