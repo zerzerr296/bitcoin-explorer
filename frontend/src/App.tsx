@@ -19,11 +19,12 @@ function App() {
         async function fetchInitialData() {
             try {
                 const response = await axios.get(`${apiUrl}/latest_blocks`);
-                // 直接使用从后端传来的时间，不再格式化
+                // 直接使用从后端传来的时间字段
                 const formattedData = response.data.map((item: any) => ({
                     ...item,
-                    time: item.time,  // 使用后端传来的时间字段
+                    time: item.timestamp,  // 使用后端传来的时间字段
                 }));
+                console.log("Initial Data:", formattedData);  // 输出到控制台，检查数据格式
                 setData(formattedData);
             } catch (error) {
                 console.error('Failed to fetch initial data:', error);
@@ -42,9 +43,10 @@ function App() {
             try {
                 const parsedData = JSON.parse(event.data);
                 // 直接使用 WebSocket 返回的时间字段
+                console.log("Parsed Data:", parsedData);  // 输出接收到的 WebSocket 数据
                 const newDataPoint: DataPoint = {
                     ...parsedData,
-                    time: parsedData.time, // 直接从 WebSocket 数据中获取 time 字段
+                    time: parsedData.timestamp, // 直接从 WebSocket 数据中获取 time 字段
                 };
 
                 setData((prevData) => {
@@ -84,7 +86,7 @@ function App() {
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis 
-                                dataKey="time" 
+                                dataKey="time"  // 使用 time 字段
                                 angle={45} // 设置 X 轴刻度的倾斜角度
                                 textAnchor="start" // 设置文本起始位置
                             />
