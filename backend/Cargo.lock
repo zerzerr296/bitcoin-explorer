@@ -81,6 +81,7 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "funty 3.0.0-rc2",
  "futures-util",
  "mysql",

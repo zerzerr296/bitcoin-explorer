@@ -76,7 +76,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
     let result: Vec<(i32, i64, f64, String)> = conn
         .query("SELECT block_height, transactions, price, timestamp FROM blocks ORDER BY id DESC LIMIT 10")
         .unwrap();
-
+    println!("Fetched data from database: {:?}", result);
     let data: Vec<BlockData> = result
         .into_iter()
         .map(|(height, transactions, price, timestamp)| BlockData {
@@ -86,7 +86,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
             time: timestamp, // 假设数据库已经保存为MM/DD/YYYY HH:MM:SS格式
         })
         .collect();
-
+    println!("Mapped data: {:?}", data);
     Ok(data)
 }
 

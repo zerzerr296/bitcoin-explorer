@@ -19,20 +19,17 @@ function App() {
         async function fetchInitialData() {
             try {
                 const response = await axios.get(`${apiUrl}/latest_blocks`);
-                // 直接使用从后端传来的时间字段
-                const formattedData = response.data.map((item: any) => ({
-                    ...item,
-                    time: item.timestamp,  // 使用后端传来的时间字段
-                }));
+                // 不需要再映射 time 字段，直接将整个 item 对象传递给 setData
+                const formattedData = response.data.reverse();
                 console.log("Initial Data:", formattedData);  // 输出到控制台，检查数据格式
                 setData(formattedData);
             } catch (error) {
                 console.error('Failed to fetch initial data:', error);
             }
         }
-
+    
         fetchInitialData();
-    }, []);
+    }, []);    
 
     // WebSocket 连接
     useEffect(() => {
