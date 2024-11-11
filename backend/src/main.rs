@@ -10,7 +10,7 @@ use anyhow::Result;
 use futures_util::{StreamExt, SinkExt};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use chrono::{DateTime, Utc}; // 引入 chrono 库
+use chrono::{DateTime, Utc, NaiveDateTime}; // 引入 chrono 库
 
 #[derive(Serialize)]
 struct BlockData {
@@ -20,22 +20,12 @@ struct BlockData {
     time: String, // 添加时间字段
 }
 
-// 将 API 时间格式转换为 MySQL 可接受的格式
-fn convert_to_mysql_timestamp(iso_time: &str) -> String {
+// 将 API 时间格式转换为符合美国习惯的字符串格式
+fn convert_to_american_format(iso_time: &str) -> String {
     let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(iso_time)
         .expect("Failed to parse datetime")
         .with_timezone(&Utc);
-    datetime.format("%Y-%m-%d %H:%M:%S").to_string() // 返回 MySQL 格式的时间
-}
-// 将数据库时间戳转换为符合 WebSocket 数据格式的字符串
-fn convert_to_websocket_format(timestamp: &str) -> String {
-    // 使用 chrono 库转换时间
-    let datetime: DateTime<Utc> = DateTime::parse_from_str(timestamp, "%Y-%m-%d %H:%M:%S")
-        .expect("Failed to parse timestamp")
-        .with_timezone(&Utc);
-
-    // 转换为 WebSocket 格式（ISO 8601 格式）
-    datetime.to_rfc3339()  // 返回 ISO 8601 格式的字符串
+    datetime.format("%m/%d/%Y %H:%M:%S").to_string() // 返回美国格式
 }
 
 async fn fetch_blockchain_data() -> Result<(i32, i64, String, String)> {
@@ -52,9 +42,9 @@ async fn fetch_blockchain_data() -> Result<(i32, i64, String, String)> {
     let transactions = json["unconfirmed_count"].as_i64().ok_or(anyhow::anyhow!("Unconfirmed transactions field missing or invalid"))?;
     let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?.to_string();
     let time = json["time"].as_str().ok_or(anyhow::anyhow!("Time field missing or invalid"))?.to_string(); // 获取时间字段
-    let mysql_time = convert_to_mysql_timestamp(&time); // 转换为 MySQL 可接受的时间格式
+    let american_time = convert_to_american_format(&time); // 转换为美国格式
     
-    Ok((height, transactions, hash, mysql_time)) // 返回转换后的时间字段
+    Ok((height, transactions, hash, american_time)) // 返回转换后的时间字段
 }
 
 async fn fetch_bitcoin_price() -> Result<f64> {
@@ -93,7 +83,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
             height,
             transactions,
             price,
-            time: convert_to_websocket_format(&timestamp), // 使用数据库中存储的时间
+            time: timestamp, // 假设数据库已经保存为MM/DD/YYYY HH:MM:SS格式
         })
         .collect();
 
