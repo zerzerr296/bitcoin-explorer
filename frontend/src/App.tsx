@@ -84,7 +84,7 @@ function App() {
                                 textAnchor="start" 
                                 tickLine={false} 
                                 tickSize={8}
-                                padding={{ left: 10, right: 10 }}  
+                                padding={{ left: 10 }}  
                                 tick={{ fontSize: 9 }}  
                             />
                             <YAxis tick={{ fontSize: 12 }} />
@@ -93,7 +93,7 @@ function App() {
                                 layout="vertical" 
                                 align="right" 
                                 verticalAlign="middle" 
-                                margin={{ right: 20 }} // 留出右侧空间
+                                margin={{ right: 10 }} // 留出右侧空间
                             />
                             <Line type="monotone" dataKey="height" stroke="#8884d8" activeDot={{ r: 8 }} />
                             <Line type="monotone" dataKey="transactions" stroke="#82ca9d" />
