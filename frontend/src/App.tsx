@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
-import { format } from 'date-fns';  // 引入 date-fns 库用于时间格式化
 
 interface DataPoint {
     height: number;
@@ -20,10 +19,10 @@ function App() {
         async function fetchInitialData() {
             try {
                 const response = await axios.get(`${apiUrl}/latest_blocks`);
-                // 格式化从后端传来的时间
+                // 直接使用从后端传来的时间，不再格式化
                 const formattedData = response.data.map((item: any) => ({
                     ...item,
-                    time: format(new Date(item.time), 'MM/dd/yyyy HH:mm:ss'),  // 使用 date-fns 格式化时间
+                    time: item.time,  // 使用后端传来的时间字段
                 }));
                 setData(formattedData);
             } catch (error) {
@@ -42,10 +41,10 @@ function App() {
             console.log("WebSocket message received: ", event.data);
             try {
                 const parsedData = JSON.parse(event.data);
-                // 格式化 WebSocket 返回的时间
+                // 直接使用 WebSocket 返回的时间字段
                 const newDataPoint: DataPoint = {
                     ...parsedData,
-                    time: format(new Date(parsedData.time), 'MM/dd/yyyy HH:mm:ss'),  // 使用 date-fns 格式化时间
+                    time: parsedData.time, // 直接从 WebSocket 数据中获取 time 字段
                 };
 
                 setData((prevData) => {
@@ -84,7 +83,11 @@ function App() {
                     <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="time" />
+                            <XAxis 
+                                dataKey="time" 
+                                angle={45} // 设置 X 轴刻度的倾斜角度
+                                textAnchor="start" // 设置文本起始位置
+                            />
                             <YAxis />
                             <Tooltip />
                             <Legend />

@@ -32,15 +32,6 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 阴影效果 */
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* 控制X轴的时间标签倾斜显示 */
 .recharts-cartesian-axis-tick-value {
   transform: rotate(-45deg);  /* 旋转45度 */
