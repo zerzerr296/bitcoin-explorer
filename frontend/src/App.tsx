@@ -75,7 +75,7 @@ function App() {
 
             {data.length > 0 ? (
                 <div className="chart-container">
-                    <ResponsiveContainer width="95%" height={400}>
+                    <ResponsiveContainer width="98%" height={400}>
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis 
@@ -84,12 +84,17 @@ function App() {
                                 textAnchor="start" 
                                 tickLine={false} 
                                 tickSize={8}
-                                padding={{ left: 10, right: 20 }} 
-                                tick={{ fontSize: 9 }} 
+                                padding={{ left: 10, right: 10 }}  
+                                tick={{ fontSize: 9 }}  
                             />
                             <YAxis tick={{ fontSize: 12 }} />
                             <Tooltip />
-                            <Legend />
+                            <Legend 
+                                layout="vertical" 
+                                align="right" 
+                                verticalAlign="middle" 
+                                margin={{ right: 20 }} // 留出右侧空间
+                            />
                             <Line type="monotone" dataKey="height" stroke="#8884d8" activeDot={{ r: 8 }} />
                             <Line type="monotone" dataKey="transactions" stroke="#82ca9d" />
                             <Line type="monotone" dataKey="price" stroke="#ff7300" />
