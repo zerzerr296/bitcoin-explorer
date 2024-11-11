@@ -10,6 +10,7 @@ use anyhow::Result;
 use futures_util::{StreamExt, SinkExt};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use chrono::{DateTime, Utc}; // 引入 chrono 库
 
 #[derive(Serialize)]
 struct BlockData {
@@ -17,6 +18,14 @@ struct BlockData {
     transactions: i64,
     price: f64,
     time: String, // 添加时间字段
+}
+
+// 将 API 时间格式转换为 MySQL 可接受的格式
+fn convert_to_mysql_timestamp(iso_time: &str) -> String {
+    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(iso_time)
+        .expect("Failed to parse datetime")
+        .with_timezone(&Utc);
+    datetime.format("%Y-%m-%d %H:%M:%S").to_string() // 返回 MySQL 格式的时间
 }
 
 async fn fetch_blockchain_data() -> Result<(i32, i64, String, String)> {
@@ -33,8 +42,9 @@ async fn fetch_blockchain_data() -> Result<(i32, i64, String, String)> {
     let transactions = json["unconfirmed_count"].as_i64().ok_or(anyhow::anyhow!("Unconfirmed transactions field missing or invalid"))?;
     let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?.to_string();
     let time = json["time"].as_str().ok_or(anyhow::anyhow!("Time field missing or invalid"))?.to_string(); // 获取时间字段
+    let mysql_time = convert_to_mysql_timestamp(&time); // 转换为 MySQL 可接受的时间格式
     
-    Ok((height, transactions, hash, time)) // 返回时间字段
+    Ok((height, transactions, hash, mysql_time)) // 返回转换后的时间字段
 }
 
 async fn fetch_bitcoin_price() -> Result<f64> {
@@ -157,7 +167,7 @@ async fn main() {
                                 "transactions" => transactions,
                                 "price" => price,
                                 "hash" => hash,
-                                "timestamp" => &time, // 保存读取到的时间
+                                "timestamp" => &time, // 使用转换后的时间
                             }
                         ).unwrap();
 
@@ -186,7 +196,7 @@ async fn main() {
                 }
             }
 
-            sleep(Duration::from_secs(60)).await; // 每 300 秒获取一次数据
+            sleep(Duration::from_secs(60)).await; // 每 60 秒获取一次数据
         }
     });
 
