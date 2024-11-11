@@ -1,35 +1,35 @@
 .App {
   display: flex;
-  flex-direction: column;  /* 设置为垂直排列 */
-  align-items: center;     /* 保证所有子元素水平居中 */
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   min-height: 100vh;
 }
 
 .chart-container {
   display: flex;
-  justify-content: center;  /* 保证chart居中 */
-  width: 80%; /* 确保宽度占屏幕的80% */
-  max-width: 1200px; /* 最大宽度限制 */
-  margin: 20px 0; /* 上下间距，左右自动居中 */
+  justify-content: center;
+  width: 80%;
+  max-width: 1200px;
+  margin: 20px 0;
   padding: 20px;
-  background-color: #f4f4f9; /* 背景颜色 */
+  background-color: #f4f4f9;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .recharts-cartesian-axis-tick-value {
   font-size: 10px; /* 调整字体大小 */
-  transform: rotate(-45deg); /* 旋转45度 */
+  transform: rotate(-45deg); 
   transform-origin: bottom left;
-  text-align: right; /* 文字右对齐 */
-  white-space: nowrap; /* 防止换行 */
+  text-align: right;
+  white-space: nowrap;
 }
 
 .recharts-cartesian-axis-tick {
-  padding-bottom: 10px;  /* 增加x轴刻度之间的间距 */
+  padding-bottom: 10px;
 }
 
 .recharts-cartesian-axis {
-  margin-top: 20px;  /* 增加上边距，防止被压缩 */
+  margin-top: 20px;
 }
