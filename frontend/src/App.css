@@ -12,14 +12,15 @@
   width: 80%;
   max-width: 1200px;
   margin: 20px 0;
-  padding: 20px;
+  padding: 20px 0;
   background-color: #f4f4f9;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 调整X轴标签的字体大小和间距 */
 .recharts-cartesian-axis-tick-value {
-  font-size: 9px;  /* 调整字体大小 */
+  font-size: 9px;
   transform: rotate(-45deg);
   transform-origin: bottom left;
   text-align: right;
@@ -30,6 +31,7 @@
   padding-bottom: 10px;
 }
 
+/* 调整坐标轴之间的间距 */
 .recharts-cartesian-axis {
   margin-top: 10px;
 }
