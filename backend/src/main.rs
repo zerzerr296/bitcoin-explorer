@@ -12,7 +12,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use chrono::{DateTime, Utc, NaiveDateTime}; // 引入 chrono 库
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct BlockData {
     height: i32,
     transactions: i64,
