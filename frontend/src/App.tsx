@@ -11,8 +11,8 @@ interface DataPoint {
 
 function App() {
     const [data, setData] = useState<DataPoint[]>([]);
-    const apiUrl = '/api'; 
-    const wsUrl = 'ws://104.154.105.117:8082/api/ws';
+    const apiUrl = 'http://104.154.105.117:3030/api'; 
+    const wsUrl = 'ws://104.154.105.117:3030/api/ws';
     // 获取初始数据
     useEffect(() => {
         async function fetchInitialData() {
