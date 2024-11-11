@@ -75,7 +75,7 @@ function App() {
 
             {data.length > 0 ? (
                 <div className="chart-container">
-                    <ResponsiveContainer width="95%" height={400}>
+                    <ResponsiveContainer width="98%" height={400}>
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis 
@@ -84,8 +84,8 @@ function App() {
                                 textAnchor="start" 
                                 tickLine={false} 
                                 tickSize={8}
-                                padding={{ left: 20, right: 20 }} 
-                                tick={{ fontSize: 10 }} 
+                                padding={{ left: 10, right: 20 }}  {/* 调整右侧间距 */}
+                                tick={{ fontSize: 9 }}  {/* 调整字体大小 */}
                             />
                             <YAxis tick={{ fontSize: 12 }} />
                             <Tooltip />

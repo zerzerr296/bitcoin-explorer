@@ -19,8 +19,8 @@
 }
 
 .recharts-cartesian-axis-tick-value {
-  font-size: 10px; /* 调整字体大小 */
-  transform: rotate(-45deg); 
+  font-size: 9px;  /* 调整字体大小 */
+  transform: rotate(-45deg);
   transform-origin: bottom left;
   text-align: right;
   white-space: nowrap;
