@@ -79,7 +79,7 @@ function App() {
 
             {data.length > 0 ? (
                 <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="90%" height={700}>
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis 
