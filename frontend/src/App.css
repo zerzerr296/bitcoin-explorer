@@ -23,7 +23,7 @@
 }
 
 .chart-container {
-  width: 90%; /* 使宽度为页面的90%，以保持左右有空间 */
+  width: 60%; /* 使宽度为页面的90%，以保持左右有空间 */
   max-width: 1200px; /* 最大宽度为1200px */
   margin: 20px auto; /* 上下20px，左右自动居中 */
   padding: 20px;
