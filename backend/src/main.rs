@@ -27,6 +27,16 @@ fn convert_to_mysql_timestamp(iso_time: &str) -> String {
         .with_timezone(&Utc);
     datetime.format("%Y-%m-%d %H:%M:%S").to_string() // 返回 MySQL 格式的时间
 }
+// 将数据库时间戳转换为符合 WebSocket 数据格式的字符串
+fn convert_to_websocket_format(timestamp: &str) -> String {
+    // 使用 chrono 库转换时间
+    let datetime: DateTime<Utc> = DateTime::parse_from_str(timestamp, "%Y-%m-%d %H:%M:%S")
+        .expect("Failed to parse timestamp")
+        .with_timezone(&Utc);
+
+    // 转换为 WebSocket 格式（ISO 8601 格式）
+    datetime.to_rfc3339()  // 返回 ISO 8601 格式的字符串
+}
 
 async fn fetch_blockchain_data() -> Result<(i32, i64, String, String)> {
     let client = reqwest::Client::builder()
@@ -83,7 +93,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
             height,
             transactions,
             price,
-            time: timestamp, // 使用数据库中存储的时间
+            time: convert_to_websocket_format(&timestamp), // 使用数据库中存储的时间
         })
         .collect();
 
