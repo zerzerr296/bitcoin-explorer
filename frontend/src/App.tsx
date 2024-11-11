@@ -75,7 +75,7 @@ function App() {
 
             {data.length > 0 ? (
                 <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="95%" height={400}>
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis 
@@ -83,10 +83,11 @@ function App() {
                                 angle={45} 
                                 textAnchor="start" 
                                 tickLine={false} 
-                                tickSize={5}  // 调整刻度线的大小
-                                padding={{ left: 10, right: 10 }}  // 增加左右的填充
+                                tickSize={8}
+                                padding={{ left: 20, right: 20 }} 
+                                tick={{ fontSize: 10 }} 
                             />
-                            <YAxis />
+                            <YAxis tick={{ fontSize: 12 }} />
                             <Tooltip />
                             <Legend />
                             <Line type="monotone" dataKey="height" stroke="#8884d8" activeDot={{ r: 8 }} />
