@@ -108,9 +108,8 @@ async fn main() {
         loop {
             match fetch_blockchain_data().await {
                 Ok((height, transactions, hash)) => {
-                    // 确保所有数据已获取后，再获取价格
                     if let Ok(price) = fetch_bitcoin_price().await {
-                        conn.exec_drop(
+                        if let Err(e) = conn.exec_drop(
                             "INSERT INTO blocks (block_height, transactions, price, hash) VALUES (:height, :transactions, :price, :hash)",
                             params! {
                                 "height" => height,
@@ -118,21 +117,22 @@ async fn main() {
                                 "price" => price,
                                 "hash" => hash,
                             }
-                        ).unwrap();
-
-                        let message = format!(
-                            r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
-                            height, transactions, price
-                        );
-
-                        println!("Attempting to broadcast message: {}", message);
-                        if let Err(e) = {
-                            let tx = tx_clone.lock().await;
-                            tx.send(message.clone())
-                        } {
-                            println!("Failed to broadcast message: {}", e);
+                        ) {
+                            println!("Failed to insert into blocks table: {}", e);
                         } else {
-                            println!("Broadcasted message: {}", message);
+                            let message = format!(
+                                r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
+                                height, transactions, price
+                            );
+
+                            if let Err(e) = {
+                                let tx = tx_clone.lock().await;
+                                tx.send(message.clone())
+                            } {
+                                println!("Failed to broadcast message: {}", e);
+                            } else {
+                                println!("Broadcasted message: {}", message);
+                            }
                         }
                     } else {
                         println!("Failed to fetch price, skipping insertion");
