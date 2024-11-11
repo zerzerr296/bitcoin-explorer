@@ -2,8 +2,8 @@ use tokio::time::{sleep, Duration};
 use mysql::*;
 use mysql::prelude::*;
 use reqwest;
-use serde::{Serialize}; // 引入 `Serialize` 特性
-use serde_json::Value; // 仅保留 `Value` 导入
+use serde::{Serialize};
+use serde_json::Value;
 use warp::Filter;
 use tokio::sync::broadcast;
 use anyhow::Result;
@@ -19,9 +19,9 @@ struct BlockData {
     time: String,
 }
 
-async fn fetch_blockchain_data() -> Result<(i32, i64)> {
+async fn fetch_blockchain_data() -> Result<(i32, i64, String)> {
     let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // 忽略 SSL 验证
+        .danger_accept_invalid_certs(true)
         .build()?;
     
     let response = client.get("https://api.blockcypher.com/v1/btc/main").send().await?;
@@ -29,15 +29,16 @@ async fn fetch_blockchain_data() -> Result<(i32, i64)> {
     
     println!("Received JSON: {:?}", json);
     
-    let height = json["height"].as_i64().ok_or(anyhow::anyhow!("Height field missing or invalid"))?;
+    let height = json["height"].as_i64().ok_or(anyhow::anyhow!("Height field missing or invalid"))? as i32;
     let transactions = json["unconfirmed_count"].as_i64().ok_or(anyhow::anyhow!("Unconfirmed transactions field missing or invalid"))?;
+    let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?.to_string();
     
-    Ok((height as i32, transactions))
+    Ok((height, transactions, hash))
 }
 
 async fn fetch_bitcoin_price() -> Result<f64> {
     let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // 忽略 SSL 验证
+        .danger_accept_invalid_certs(true)
         .build()?;
     
     let response = client
@@ -48,47 +49,16 @@ async fn fetch_bitcoin_price() -> Result<f64> {
     Ok(json["bitcoin"]["usd"].as_f64().unwrap())
 }
 
-async fn user_connected(ws: warp::ws::WebSocket, mut rx: tokio::sync::broadcast::Receiver<String>) {
-    let (mut ws_tx, _rx) = ws.split();
-    println!("A user has connected.");
-
-    while let Ok(msg) = rx.recv().await {
-        if ws_tx.send(warp::ws::Message::text(msg)).await.is_err() {
-            println!("Failed to send message, closing connection.");
-            break;
-        }
-    }
-    println!("A user has disconnected.");
-}
-
-async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
-    let result: Vec<(i32, i64, f64)> = conn
-        .query("SELECT block_height, transactions, price FROM blocks ORDER BY id DESC LIMIT 10")
-        .unwrap();
-
-    let data: Vec<BlockData> = result
-        .into_iter()
-        .map(|(height, transactions, price)| BlockData {
-            height,
-            transactions,
-            price,
-            time: chrono::Utc::now().to_rfc3339(), // 使用 UTC 时间戳
-        })
-        .collect();
-
-    Ok(data)
-}
-
 #[tokio::main]
 async fn main() {
-    let tx = Arc::new(Mutex::new(broadcast::channel(100).0)); // 使用 Arc<Mutex<>> 包装 tx
+    let tx = Arc::new(Mutex::new(broadcast::channel(100).0));
 
     let websocket_route = warp::path("ws")
         .and(warp::ws())
         .map({
-            let tx = Arc::clone(&tx); // 克隆 Arc
+            let tx = Arc::clone(&tx);
             move |ws: warp::ws::Ws| {
-                let tx = Arc::clone(&tx); // 再次克隆 Arc
+                let tx = Arc::clone(&tx);
                 ws.on_upgrade(move |socket| {
                     let tx = Arc::clone(&tx);
                     async move {
@@ -120,8 +90,8 @@ async fn main() {
             move || {
                 let conn = pool.get_conn().unwrap();
                 async move {
-                    let blocks = get_latest_blocks(conn).await.unwrap(); // 使用 async 和 await
-                    Ok::<_, warp::Rejection>(warp::reply::json(&blocks)) // 返回 JSON 响应
+                    let blocks = get_latest_blocks(conn).await.unwrap();
+                    Ok::<_, warp::Rejection>(warp::reply::json(&blocks))
                 }
             }
         });
@@ -130,60 +100,84 @@ async fn main() {
         .or(latest_blocks_route);
 
     let mut conn = pool.get_conn().unwrap();
-    let tx_clone = Arc::clone(&tx); // 克隆 Arc
+    let tx_clone = Arc::clone(&tx);
 
     tokio::spawn(async move {
         loop {
             match fetch_blockchain_data().await {
-                Ok((height, transactions)) => {
-                    let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?;
-                    // 确保 hash 有值
-                    conn.exec_drop(
-                        "INSERT INTO blocks (block_height, transactions, price, hash) VALUES (:height, :transactions, :price, :hash)",
-                        params! {
-                            "height" => height,
-                            "transactions" => transactions,
-                            "price" => price,
-                            "hash" => hash, // 使用提前检查的 hash 值
+                Ok((height, transactions, hash)) => {
+                    // 确保所有数据已获取后，再获取价格
+                    if let Ok(price) = fetch_bitcoin_price().await {
+                        conn.exec_drop(
+                            "INSERT INTO blocks (block_height, transactions, price, hash) VALUES (:height, :transactions, :price, :hash)",
+                            params! {
+                                "height" => height,
+                                "transactions" => transactions,
+                                "price" => price,
+                                "hash" => hash,
+                            }
+                        ).unwrap();
+
+                        let message = format!(
+                            r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
+                            height, transactions, price
+                        );
+
+                        println!("Attempting to broadcast message: {}", message);
+                        // 广播数据给所有连接的客户端
+                        if let Err(e) = {
+                            let tx = tx_clone.lock().await;
+                            tx.send(message.clone())
+                        } {
+                            println!("Failed to broadcast message: {}", e);
+                        } else {
+                            println!("Broadcasted message: {}", message);
                         }
-                    ).unwrap();
-
-                    let price = fetch_bitcoin_price().await.unwrap();
-                    let message = format!(
-                        r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
-                        height, transactions, price
-                    );
-
-                    println!("Attempting to broadcast message: {}", message);
-                    // 广播数据给所有连接的客户端
-                    if let Err(e) = {
-                        let tx = tx_clone.lock().await;
-                        tx.send(message.clone())
-                    } {
-                        println!("Failed to broadcast message: {}", e);
                     } else {
-                        println!("Broadcasted message: {}", message);
+                        println!("Failed to fetch price, skipping insertion");
                     }
-
-                    conn.exec_drop(
-                        "INSERT INTO blocks (block_height, transactions, price) VALUES (:height, :transactions, :price)",
-                        params! {
-                            "height" => height,
-                            "transactions" => transactions,
-                            "price" => price,
-                        }
-                    ).unwrap();
                 }
                 Err(e) => {
                     println!("Failed to fetch blockchain data: {}", e);
                 }
             }
 
-            sleep(Duration::from_secs(300)).await; // 每 300 秒获取一次数据
+            sleep(Duration::from_secs(300)).await;
         }
     });
 
     println!("WebSocket server started at ws://0.0.0.0:3030/ws");
 
     warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+}
+
+async fn user_connected(ws: warp::ws::WebSocket, mut rx: tokio::sync::broadcast::Receiver<String>) {
+    let (mut ws_tx, _rx) = ws.split();
+    println!("A user has connected.");
+
+    while let Ok(msg) = rx.recv().await {
+        if ws_tx.send(warp::ws::Message::text(msg)).await.is_err() {
+            println!("Failed to send message, closing connection.");
+            break;
+        }
+    }
+    println!("A user has disconnected.");
+}
+
+async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
+    let result: Vec<(i32, i64, f64)> = conn
+        .query("SELECT block_height, transactions, price FROM blocks ORDER BY id DESC LIMIT 10")
+        .unwrap();
+
+    let data: Vec<BlockData> = result
+        .into_iter()
+        .map(|(height, transactions, price)| BlockData {
+            height,
+            transactions,
+            price,
+            time: chrono::Utc::now().to_rfc3339(),
+        })
+        .collect();
+
+    Ok(data)
 }
