@@ -2,8 +2,8 @@ use tokio::time::{sleep, Duration};
 use mysql::*;
 use mysql::prelude::*;
 use reqwest;
-use serde::{Serialize}; // 引入 `Serialize` 特性
-use serde_json::Value; // 仅保留 `Value` 导入
+use serde::{Serialize};
+use serde_json::Value;
 use warp::Filter;
 use tokio::sync::broadcast;
 use anyhow::Result;
@@ -19,9 +19,9 @@ struct BlockData {
     time: String,
 }
 
-async fn fetch_blockchain_data() -> Result<(i32, i64)> {
+async fn fetch_blockchain_data() -> Result<(i32, i64, String)> {
     let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // 忽略 SSL 验证
+        .danger_accept_invalid_certs(true)
         .build()?;
     
     let response = client.get("https://api.blockcypher.com/v1/btc/main").send().await?;
@@ -29,15 +29,16 @@ async fn fetch_blockchain_data() -> Result<(i32, i64)> {
     
     println!("Received JSON: {:?}", json);
     
-    let height = json["height"].as_i64().ok_or(anyhow::anyhow!("Height field missing or invalid"))?;
+    let height = json["height"].as_i64().ok_or(anyhow::anyhow!("Height field missing or invalid"))? as i32;
     let transactions = json["unconfirmed_count"].as_i64().ok_or(anyhow::anyhow!("Unconfirmed transactions field missing or invalid"))?;
+    let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?.to_string();
     
-    Ok((height as i32, transactions))
+    Ok((height, transactions, hash))
 }
 
 async fn fetch_bitcoin_price() -> Result<f64> {
     let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(true) // 忽略 SSL 验证
+        .danger_accept_invalid_certs(true)
         .build()?;
     
     let response = client
@@ -71,7 +72,7 @@ async fn get_latest_blocks(mut conn: PooledConn) -> Result<Vec<BlockData>> {
             height,
             transactions,
             price,
-            time: chrono::Utc::now().to_rfc3339(), // 使用 UTC 时间戳
+            time: chrono::Utc::now().to_rfc3339(),
         })
         .collect();
 
@@ -134,33 +135,38 @@ async fn main() {
     tokio::spawn(async move {
         loop {
             match fetch_blockchain_data().await {
-                Ok((height, transactions)) => {
-                    conn.exec_drop(
-                        "INSERT INTO blocks (block_height, transactions, price) VALUES (:height, :transactions, :price)",
-                        params! {
-                            "height" => height,
-                            "transactions" => transactions,
-                            "price" => fetch_bitcoin_price().await.unwrap(),
+                Ok((height, transactions, hash)) => {
+                    // 确保所有数据已获取后，再获取价格
+                    if let Ok(price) = fetch_bitcoin_price().await {
+                        conn.exec_drop(
+                            "INSERT INTO blocks (block_height, transactions, price, hash) VALUES (:height, :transactions, :price, :hash)",
+                            params! {
+                                "height" => height,
+                                "transactions" => transactions,
+                                "price" => price,
+                                "hash" => hash,
+                            }
+                        ).unwrap();
+
+                        let message = format!(
+                            r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
+                            height, transactions, price
+                        );
+
+                        // 广播数据给所有连接的客户端
+                        if let Err(e) = {
+                            let tx = tx_clone.lock().await;
+                            tx.send(message.clone())
+                        } {
+                            println!("Failed to broadcast message: {}", e);
+                        } else {
+                            println!("Broadcasted message: {}", message);
                         }
-                    ).unwrap();
 
-                    let price = fetch_bitcoin_price().await.unwrap();
-                    let message = format!(
-                        r#"{{"height": {}, "transactions": {}, "price": {}}}"#,
-                        height, transactions, price
-                    );
-
-                    // 广播数据给所有连接的客户端
-                    if let Err(e) = {
-                        let tx = tx_clone.lock().await;
-                        tx.send(message.clone())
-                    } {
-                        println!("Failed to broadcast message: {}", e);
+                        println!("Inserted: Height: {}, Transactions: {}, Price: {}", height, transactions, price);
                     } else {
-                        println!("Broadcasted message: {}", message);
+                        println!("Failed to fetch price, skipping insertion");
                     }
-
-                    println!("Inserted: Height: {}, Transactions: {}, Price: {}", height, transactions, price);
                 }
                 Err(e) => {
                     println!("Failed to fetch blockchain data: {}", e);
