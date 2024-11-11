@@ -136,15 +136,17 @@ async fn main() {
         loop {
             match fetch_blockchain_data().await {
                 Ok((height, transactions)) => {
+                    let hash = json["hash"].as_str().ok_or(anyhow::anyhow!("Hash field missing or invalid"))?;
+                    // 确保 hash 有值
                     conn.exec_drop(
                         "INSERT INTO blocks (block_height, transactions, price, hash) VALUES (:height, :transactions, :price, :hash)",
                         params! {
                             "height" => height,
                             "transactions" => transactions,
                             "price" => price,
-                            "hash" => json["hash"].as_str().unwrap(), // 提供 hash 字段的值
+                            "hash" => hash, // 使用提前检查的 hash 值
                         }
-                    ).unwrap();                    
+                    ).unwrap();
 
                     let price = fetch_bitcoin_price().await.unwrap();
                     let message = format!(
