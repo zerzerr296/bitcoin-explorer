@@ -75,21 +75,20 @@ function App() {
 
             {data.length > 0 ? (
                 <div className="chart-container">
-                    <ResponsiveContainer width="98%" height={400}>
+                    <ResponsiveContainer width="95%" height={400}>
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis 
                                 dataKey="time"  
-                                angle={45} 
-                                textAnchor="start" 
+                                angle={0}  // 时间标签水平显示
+                                textAnchor="middle"  // 使文本居中
                                 tickLine={false} 
                                 tickSize={8}
-                                padding={{ left: 20}} 
-                                tick={{ fontSize: 9 }} 
+                                padding={{ left: 10, right: 10 }} 
+                                tick={{ fontSize: 10 }} 
                             />
                             <YAxis tick={{ fontSize: 12 }} />
                             <Tooltip />
-                            {/* 将 Legend 放置在下方 */}
                             <Legend verticalAlign="bottom" />
                             <Line type="monotone" dataKey="height" stroke="#8884d8" activeDot={{ r: 8 }} />
                             <Line type="monotone" dataKey="transactions" stroke="#82ca9d" />

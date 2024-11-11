@@ -9,7 +9,7 @@
 .chart-container {
   display: flex;
   justify-content: center;
-  width: 90%;  /* 这里调整为90% */
+  width: 90%;  /* 宽度缩小为90% */
   max-width: 1200px;
   margin: 20px 0;
   padding: 20px 0;
@@ -18,12 +18,10 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* X轴的时间标签，字体更小，减少重叠 */
+/* X轴的时间标签，字体更小，减少重叠，水平显示 */
 .recharts-cartesian-axis-tick-value {
-  font-size: 9px;
-  transform: rotate(-45deg);
-  transform-origin: bottom left;
-  text-align: right;
+  font-size: 10px;
+  text-align: center;  /* 水平居中 */
   white-space: nowrap;
 }
 
