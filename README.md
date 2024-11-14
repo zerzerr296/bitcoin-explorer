@@ -9,7 +9,7 @@ Bitcoin Explorer is a real-time data visualization tool that displays on-chain a
 - Fetches and updates data automatically every 60 seconds.
 - Built using Rust for the backend, React for the frontend, and MySQL for database storage.
 
-## Technologies
+## Technologies11
 
 - **Frontend**: React, TypeScript, Recharts (for charts)
 - **Backend**: Rust, Warp, MySQL, WebSockets, API calls to external Bitcoin services
